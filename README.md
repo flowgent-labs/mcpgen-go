@@ -24,7 +24,7 @@ This produces a complete Go project with tools for every operation:
 ```
 myconfluence-mcp/
 ├── .credentials                 # file-based token (set MCP_UPSTREAM_TOKEN_FILE)
-├── main.go                      # entry point (stdio/http transport)
+├── main.go                      # entry point (stdio/http/cli transport)
 ├── client.sh                    # quick curl-based test script
 ├── Makefile                     # build / run / clean / test
 ├── myconfluence-mcp             # compiled binary
@@ -276,6 +276,30 @@ mcp:
 }
 ```
 
+### CLI Mode examples
+
+Invoke tools directly from the command line — no MCP agent needed. Useful for debugging, scripting, and manual API exploration. The CLI reuses the same `mcptools` handlers as the MCP server, so every call makes a real HTTP request upstream.
+
+```sh
+# List all available tools
+./myconfluence-mcp -t cli list
+# Available subcommands (14):
+#   Addlabels                           Add labels to a page
+#   Createchildpage                     Create a child page under a parent page using the children API
+#   Createcomment                       Add a comment to a page using the nested children API
+#   Createpage                          Create a new page (or child page) in a Confluence space
+#   Deletepage                          Move a page to trash (soft delete) or permanently delete it
+#   ...
+
+# Call a tool with named arguments (key=value)
+./myconfluence-mcp -t cli call Getpage id=123456
+./myconfluence-mcp -t cli call Listspaces limit=5 type=global
+./myconfluence-mcp -t cli call Searchcontent cql='type=page AND text~"API"' limit=10
+
+# Call a tool without arguments (for tools that have no required params)
+./myconfluence-mcp -t cli call Listspaces
+```
+
 ## Generator CLI
 
 ```sh
@@ -319,7 +343,7 @@ Long `operationId` values are automatically truncated to 125 characters with a h
 
 | Flag | Description | Default |
 |---|---|---|
-| `--transport <stdio\|http>` | Transport mode | `stdio` |
+| `--transport <stdio\|http\|cli>` | Transport mode | `stdio` |
 | `--port <number>` | HTTP server port | `8080` |
 | `-v, --verbose <0-10>` | Request logging verbosity | `0` |
 
