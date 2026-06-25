@@ -346,8 +346,9 @@ Long `operationId` values are automatically truncated to 125 characters with a h
 | Flag | Description | Default |
 |---|---|---|
 | `--transport <stdio\|http\|cli>` | Transport mode | `stdio` |
-| `--port <number>` | HTTP server port | `8080` |
+| `-p, --port <number>` | HTTP server port | `8080` |
 | `-v, --verbose <0-10>` | Request logging verbosity | `0` |
+| `--print-default-config` | Print default config.yaml to stdout and exit | |
 
 ### Logging levels
 
@@ -379,6 +380,32 @@ The server tries to obtain a Bearer token in this order:
 3. `MCP_UPSTREAM_TOKEN_FILE` (read from file — ideal for Kubernetes secrets)
 4. macOS Keychain (`security find-generic-password -s mcpgen-upstream -wa ""`)
 5. Windows Credential Manager (`cmdkey /get:mcpgen-upstream`)
+
+### Token format
+
+The token value is inspected for a recognized prefix. If the value already starts with `Bearer ` or `Basic ` (case-insensitive), it is used as-is in the `Authorization` header. Otherwise, `Bearer ` is automatically prepended.
+
+### Tool filtering
+
+For specs with many operations, limit which tools AI agents can discover via an optional config file:
+
+```sh
+# Print the default config template
+./myconfluence-mcp --print-default-config
+
+# Edit ~/.myconfluence-mcp/config.yaml and list only the tools you want
+```
+
+`$HOME/.{binaryName}/config.yaml`:
+
+```yaml
+tools:
+  include:
+    - Listspaces
+    - Searchcontent
+```
+
+When `tools.include` is non-empty, only those tools are registered with the MCP server and shown in `-t cli list`. When absent or empty, all tools are available.
 
 ## License
 
