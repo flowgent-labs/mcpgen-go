@@ -10,23 +10,25 @@ Generate production-ready Model Context Protocol (MCP) servers from OpenAPI spec
 make
 ```
 
-### Generate the MCP server (e.g. Confluence API)
+### Generate the Confluence MCP server for example
 
 ```sh
-./bin/mcpgen -v -i testdata/example_confluence_oas_v3.1.yaml -o myconfluence-mcp \
+./bin/mcpgen -v -i testdata/confluence-server-v10.2.14.oas.v3.0.1.json -o /tmp/confluence-mcp \
   --includes "listSpaces,createPage,updatePage,deletePage"
-cd myconfluence-mcp
+cd /tmp/confluence-mcp
 ```
 
 This produces a complete Go project with tools for every operation:
 
-```
-myconfluence-mcp/
+```plaintext
+confluence-mcp/
+├── bin
+├   └── confluence-mcp            # compiled binary
 ├── .credentials                 # file-based token (set MCP_UPSTREAM_TOKEN_FILE)
 ├── main.go                      # entry point (stdio/http/cli transport)
 ├── client.sh                    # quick curl-based test script
 ├── Makefile                     # build / run / clean / test
-├── myconfluence-mcp             # compiled binary
+├── confluence-mcp               # compiled binary
 └── internal/
     ├── mcpserver/server.go      # MCP server setup + tool registration
     ├── helpers/                 # ForwardRequest, logging, parameter parsing
@@ -39,12 +41,12 @@ myconfluence-mcp/
         └── ...
 ```
 
-### Start the server
+### Start in the `HTTP` mode
 
 The server defaults to httpbin.org which echoes requests — great for quick verification:
 
 ```sh
-./myconfluence-mcp --transport http --port 8080 -v 1
+./confluence-mcp --transport http --port 8080 -v 1
 # MCP_UPSTREAM_ENDPOINT=https://httpbin.org/anything
 ```
 
@@ -52,15 +54,15 @@ Set your actual upstream to enable real API calls:
 
 ```sh
 export MCP_UPSTREAM_ENDPOINT=https://api.example.com
-# Option 1: pass token via env var
-MCP_UPSTREAM_TOKEN=your-token ./myconfluence-mcp --transport http --port 8080 -v 1
+# Optional 1: pass token via env var
+MCP_UPSTREAM_TOKEN=your-token ./confluence-mcp --transport http --port 8080 -v 1
 
-# Option 2: read token from file (safer, no shell history exposure)
+# Optional 2: read token from file (safer, no shell history exposure)
 echo -n "your-token" > .credentials
-MCP_UPSTREAM_TOKEN_FILE=.credentials ./myconfluence-mcp --transport http --port 8080 -v 1
+MCP_UPSTREAM_TOKEN_FILE=.credentials ./confluence-mcp --transport http --port 8080 -v 1
 ```
 
-### Test with client.sh for `http` transport
+### Test with client.sh for `HTTP` transport only.
 
 ```sh
 ./client.sh list-tools
@@ -71,21 +73,24 @@ MCP_UPSTREAM_TOKEN_FILE=.credentials ./myconfluence-mcp --transport http --port 
 
 ### Atlassian - Jira
 
-- Server edition
-  - https://developer.atlassian.com/server
-  - https://dac-static.atlassian.com/cloud/jira/software/swagger.v3.json (Basic Same as Cloud edition)
+- Server edition (More: https://developer.atlassian.com/server)
+  - https://dac-static.atlassian.com/server/jira/platform/jira_software_dc_10007_swagger.v3.json (v10.7.4)
+  - https://dac-static.atlassian.com/server/jira/platform/jira_software_dc_11002_swagger.v3.json (v11.2.1)
+    - Other MCP refer: https://context7.com/openapi/dac-static_atlassian_server_jira_platform_jira_software_dc_11002_swagger_v3_json
+    - Older specs refer: https://docs.atlassian.com/jira/REST/server/jira-rest-plugin.wadl
 
-- Cloud edition
+- Cloud edition (More: https://developer.atlassian.com/cloud)
   - https://developer.atlassian.com/cloud/jira/software/rest/intro/#introduction
   - https://dac-static.atlassian.com/cloud/jira/software/swagger.v3.json
 
 ### Atlassian - Confluence
 
-- Server edition
+- Server edition (More: https://developer.atlassian.com/server)
   - https://developer.atlassian.com/server/confluence/rest/v10214/intro/#about
   - https://dac-static.atlassian.com/server/confluence/10.2.14.swagger.v3.json
+    - more docs: https://developer.atlassian.com/cloud
 
-- Could edition
+- Cloud edition (More: https://developer.atlassian.com/cloud)
   - https://developer.atlassian.com/cloud/confluence/rest/v2/intro/
   - https://dac-static.atlassian.com/cloud/confluence/openapi-v2.v3.json
 
@@ -99,7 +104,7 @@ MCP_UPSTREAM_TOKEN_FILE=.credentials ./myconfluence-mcp --transport http --port 
 - https://help.sonatype.com/en/api-reference.html
 - https://sonatype.github.io/sonatype-documentation/api/nexus-repository/latest/nexus-repository-api.json
 
-### Sonarqube (*Not support Swagger*)
+### Sonarqube (*Not support swagger*)
 
 - https://next.sonarqube.com/sonarqube/web_api
 - https://github.com/sonarsource/sonarqube-mcp-server (official java edition)
@@ -194,9 +199,9 @@ For specs with many operations, limit which tools AI agents can discover via an 
 
 ```sh
 # Print the default config template
-./myconfluence-mcp --print-default-config
+./confluence-mcp --print-default-config
 
-# Edit ~/.myconfluence-mcp/config.yaml and list only the tools you want
+# Edit ~/.confluence-mcp/config.yaml and list only the tools you want
 ```
 
 `$HOME/.{binaryName}/config.yaml`:
@@ -226,7 +231,7 @@ Run the MCP server as a child process — recommended for local development.
   "mcp": {
     "myconfluence": {
       "type": "local",
-      "command": ["bash", "-c", "./myconfluence-mcp"],
+      "command": ["bash", "-c", "./confluence-mcp"],
       "args": ["--transport", "stdio"],
       "env": {
         "MCP_UPSTREAM_ENDPOINT": "https://api.example.com",
@@ -246,8 +251,8 @@ Run the MCP server as a child process — recommended for local development.
 ```json
 {
   "mcpServers": {
-    "myconfluence-r": {
-      "command": "./myconfluence-mcp",
+    "confluence-mcp": {
+      "command": "./confluence-mcp",
       "args": ["--transport", "stdio"],
       "env": {
         "MCP_UPSTREAM_ENDPOINT": "https://api.example.com",
@@ -266,8 +271,8 @@ Run the MCP server as a child process — recommended for local development.
 ```json
 {
   "mcpServers": {
-    "myconfluence-r": {
-      "command": ["bash", "-c", "./myconfluence-mcp"],
+    "confluence-mcp": {
+      "command": ["bash", "-c", "./confluence-mcp"],
       "args": ["--transport", "stdio"],
       "env": {
         "MCP_UPSTREAM_ENDPOINT": "https://api.example.com",
@@ -286,8 +291,8 @@ Run the MCP server as a child process — recommended for local development.
 ```yaml
 mcp:
   servers:
-    myconfluence-r:
-      command: ./myconfluence-mcp
+    confluence-mcp:
+      command: ./confluence-mcp
       args: ["--transport", "stdio"]
       env:
         MCP_UPSTREAM_ENDPOINT: https://api.example.com
@@ -302,8 +307,8 @@ mcp:
 ```json
 {
   "mcpServers": {
-    "myconfluence-r": {
-      "command": "./myconfluence-mcp",
+    "confluence-mcp": {
+      "command": "./confluence-mcp",
       "args": ["--transport", "stdio"],
       "env": {
         "MCP_UPSTREAM_ENDPOINT": "https://api.example.com",
@@ -324,7 +329,7 @@ Start the server:
 ```sh
 export MCP_UPSTREAM_ENDPOINT=https://api.example.com
 export MCP_UPSTREAM_TOKEN=your-token
-./myconfluence-mcp --transport http --port 8080 -v 1
+./confluence-mcp --transport http --port 8080 -v 1
 ```
 
 ### OpenCode (remote)
@@ -334,7 +339,7 @@ export MCP_UPSTREAM_TOKEN=your-token
 ```json
 {
   "mcp": {
-    "myconfluence-r": {
+    "confluence-mcp": {
       "type": "remote",
       "url": "http://localhost:8080/mcp",
       "env": {
@@ -354,7 +359,7 @@ export MCP_UPSTREAM_TOKEN=your-token
 ```json
 {
   "mcpServers": {
-    "myconfluence-r": {
+    "confluence-mcp": {
       "url": "http://localhost:8080/mcp",
       "env": {
         "MCP_UPSTREAM_ENDPOINT": "https://api.example.com",
@@ -373,7 +378,7 @@ export MCP_UPSTREAM_TOKEN=your-token
 ```json
 {
   "mcpServers": {
-    "myconfluence-r": {
+    "confluence-mcp": {
       "url": "http://localhost:8080/mcp",
       "env": {
         "MCP_UPSTREAM_ENDPOINT": "https://api.example.com",
@@ -392,7 +397,7 @@ export MCP_UPSTREAM_TOKEN=your-token
 ```yaml
 mcp:
   servers:
-    myconfluence-r:
+    confluence-mcp:
       url: http://localhost:8080/mcp
       env:
         MCP_UPSTREAM_ENDPOINT: https://api.example.com
@@ -407,7 +412,7 @@ mcp:
 ```json
 {
   "mcpServers": {
-    "myconfluence-r": {
+    "confluence-mcp": {
       "url": "http://localhost:8080/mcp",
       "env": {
         "MCP_UPSTREAM_ENDPOINT": "https://api.example.com",
@@ -429,20 +434,20 @@ export MCP_UPSTREAM_ENDPOINT=https://api.example.com
 export MCP_UPSTREAM_TOKEN=your-token
 
 # First call: list available tools
-./myconfluence-mcp -t cli list
+./confluence-mcp -t cli list
 
 # First tool call: fetch a page by ID
-./myconfluence-mcp -t cli Getpage --id 123456
+./confluence-mcp -t cli Getpage --id 123456
 
 # Show tool-specific help (GNU-style usage)
-./myconfluence-mcp -t cli Getpage --help
+./confluence-mcp -t cli Getpage --help
 
 # Call a tool with GNU-style --flag arguments
-./myconfluence-mcp -t cli ListSpaces --limit=5 --type global
-./myconfluence-mcp -t cli SearchContent --cql 'type=page AND text~"API"' --limit 10
+./confluence-mcp -t cli ListSpaces --limit=5 --type global
+./confluence-mcp -t cli SearchContent --cql 'type=page AND text~"API"' --limit 10
 
 # Call a tool without arguments (for tools that have no required params)
-./myconfluence-mcp -t cli ListSpaces
+./confluence-mcp -t cli ListSpaces
 ```
 
 ## License
